@@ -1,0 +1,85 @@
+'
+'Example for Accel7 Click
+'
+'    Date          : jul 2018.
+'    Author        : Katarina Perendic
+'
+'Test configuration PIC32 :
+'    
+'    MCU                : P32MX795F512L
+'    Dev. Board         : EasyPIC Fusion v7
+'    PIC32 Compiler ver : v4.0.0.0
+'
+'---
+'
+'Description :
+'
+'The application is composed of three sections :
+'
+'- System Initialization - Initializes I2C module and set INT pin as INPUT
+'- Application Initialization - Initializes Driver init and settings accelerometer data range and 
+'                               data resolution which are necessary for the init chip.
+'- Application Task - (code snippet) - Reads the accel X / Y / Z axis data.
+'
+'
+program Click_Accel7_PIC32
+
+include Click_Accel7_types
+include Click_Accel7_config
+
+dim
+    X_axis as int16_t 
+    Y_axis as int16_t 
+    Z_axis as int16_t 
+    demoText as char[20] 
+    
+sub procedure systemInit() 
+
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_INT_PIN, _GPIO_INPUT) 
+    mikrobus_i2cInit(_MIKROBUS1, @_ACCEL7_I2C_CFG[0]) 
+    mikrobus_logInit(_LOG_USBUART_A, 115200) 
+    mikrobus_logWrite("--- System init ---", _LOG_LINE) 
+    Delay_ms(100) 
+
+end sub
+
+sub procedure applicationInit() 
+
+    accel7_i2cDriverInit(T_ACCEL7_P(@_MIKROBUS1_GPIO), T_ACCEL7_P(@_MIKROBUS1_I2C), 0x0F) 
+    accel7_init(_ACCEL7_DATA_RESP_14bit, _ACCEL7_RANGE_8g) 
+    Delay_ms(100) 
+
+end sub
+
+sub procedure applicationTask() 
+
+    X_axis = accel7_getAxis(_ACCEL7_AXIS_X) 
+    IntToStr(X_axis, demoText) 
+    mikrobus_logWrite("X axis:  ", _LOG_TEXT) 
+    mikrobus_logWrite(demoText, _LOG_LINE) 
+    Y_axis = accel7_getAxis(_ACCEL7_AXIS_Y) 
+    IntToStr(Y_axis, demoText) 
+    mikrobus_logWrite("Y axis:  ", _LOG_TEXT) 
+    mikrobus_logWrite(demoText, _LOG_LINE) 
+    Z_axis = accel7_getAxis(_ACCEL7_AXIS_Z) 
+    IntToStr(Z_axis, demoText) 
+    mikrobus_logWrite("Z axis:  ", _LOG_TEXT) 
+    mikrobus_logWrite(demoText, _LOG_LINE) 
+    mikrobus_logWrite("  ", _LOG_LINE) 
+    Delay_ms(1000) 
+
+end sub
+
+main :
+    X_axis = 0
+    Y_axis = 0
+    Z_axis = 0
+    demoText[0] = 0
+
+    systemInit() 
+    applicationInit() 
+    while (1) 
+        applicationTask() 
+    wend
+
+end.
